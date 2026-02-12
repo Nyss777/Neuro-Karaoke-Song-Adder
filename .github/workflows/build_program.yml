@@ -30,7 +30,7 @@ jobs:
         run: uv sync --all-extras --dev
 
       - name: build program
-        run: uv run --with pyinstaller pyinstaller --onedir --paths src --add-data "lib/metadata_utils;metadata_utils" --name "Neuro_K_Sync" src/local_sync/__main__.py       
+        run: uv run --with pyinstaller pyinstaller --onedir --paths src --add-data="lib/metadata_utils:metadata_utils" --name "Neuro_K_Sync" src/local_sync/__main__.py       
 
       # 4. Zip the output (PyInstaller --onedir creates a folder)
       - name: Archive Build
