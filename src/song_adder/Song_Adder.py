@@ -4,7 +4,6 @@ import logging
 import os
 import sys
 import tkinter as tk
-from json import JSONDecodeError
 from logging import Logger, LogRecord
 from pathlib import Path
 from tkinter import Tk, filedialog
@@ -36,10 +35,9 @@ class App():
         self.main_window = tk.Tk()
         self.colors: dict[str, str] = self.load_colors(script_dir)
         self.song_path: (str | None) = None
-        self.song_data: (dict[str, str] | None) = None
         self.song_obj: (Song | None) = None
+        self.new_song_data: dict[str, str] | None = None
         self.save_folder: (str | None) = None
-        self.new_payload_preview: (str | None) = None # JSON-Formatted string
 
     def main(self) -> None:
         self.build_ui()
@@ -131,11 +129,11 @@ class App():
 
     def load_file(self) -> None:
         self.song_path = self.open_file_dialog()
-        audio_tags = self.new_payload_preview = self.song_data = None
+        song_data = audio_tags = self.new_song_data = None
         self.options_frame.update_selected_file(self.song_path)
 
         if self.song_path:
-            _, self.song_data, audio_tags = get_song_data(self.song_path)
+            _, song_data, audio_tags = get_song_data(self.song_path)
             self.preview_frame.clear()
 
             if audio_tags:
@@ -143,8 +141,8 @@ class App():
             else:
                 self.image_frame.clear_image()
 
-        if self.song_data is not None:
-            self.adder_frame.update_entries(self.song_data)
+        if song_data is not None:
+            self.adder_frame.update_entries(song_data)
 
     @staticmethod
     def _truncate_string(string: str, width: int) -> str:
@@ -194,7 +192,7 @@ class App():
             logger.warning("No path selected!")
             return
 
-        self.new_payload_preview = self.song_obj = None
+        self.song_obj = self.new_song_data = None
 
         payload_kwargs = {
         ARG_MAP[field]: self.adder_frame.entries[field].get() for field in self.adder_frame.FIELD_NAMES
@@ -202,31 +200,24 @@ class App():
     
         payload_kwargs["filename"] = os.path.basename(self.song_path)
 
-        temp_hash = get_audio_hash(self.song_path)
-        if temp_hash is None:
-            logger.critical("The program was unable to generate a hash")
-            return
-        else:
-            payload_kwargs["xxhash"] = temp_hash
-
         try:
             validate_payload(payload_kwargs)
-            self.new_payload_preview = build_payload(**payload_kwargs)     
 
         except ValidationError as e:
             logger.warning(e)
 
-        except Exception as e:
+        except Exception:
             logger.debug(payload_kwargs)
-            logger.exception(e)
+            logger.exception
 
         else:
-            self.preview_frame.update_new_payload(self.new_payload_preview)
+            self.preview_frame.update_new_payload(payload_kwargs)
+            self.new_song_data = payload_kwargs
             self.load_tags_preview()
 
     def generate_file(self) -> None:
 
-        if (not self.song_obj or not self.new_payload_preview):
+        if (self.song_obj is None or self.new_song_data is None):
             logger.warning("Either no song selected or no preview!")
             return
         elif not self.save_folder:
@@ -252,7 +243,16 @@ class App():
         set_tags(new_path, self.song_obj, image_type, image_data)
         logger.debug("ID3v2 tags added")
 
-        engrave_payload(new_path, self.new_payload_preview)
+        temp_hash = get_audio_hash(new_path)
+        if temp_hash is None:
+            logger.critical("The program was unable to generate a hash!")
+            return
+        else:
+            self.new_song_data["xxhash"] = temp_hash
+
+        new_payload = build_payload(**self.new_song_data)
+        engrave_payload(new_path, new_payload)
+
         logger.debug("Json payload added")
 
         logger.info(f"Finished processing of {self.song_obj.filename}!")
@@ -461,25 +461,19 @@ class Preview_Frame(tk.Frame):
         fg=colors['text'])
         self.new_tags_label.grid(row=1, column=0, sticky='nw')
 
-    def update_new_payload(self, new_payload: str) -> None:
-        new_payload_data = {}
-        try:
-            new_payload_data = json.loads(new_payload)
-        except JSONDecodeError as e:
-            logger.error("File couldn't be processed! Error decoding the comment!")
-            logger.debug(e)
+    def update_new_payload(self, new_payload_data: dict[str, str]) -> None:
 
         self.new_payload_label['text'] = f"""\
 New Payload:\n
-        Date: {new_payload_data["Date"]}        
-        Title: {new_payload_data["Title"]}
-        Artist: {new_payload_data["Artist"]}
-        CoverArtist: {new_payload_data["CoverArtist"]}
-        Version: {new_payload_data["Version"]}
-        Discnumber: {new_payload_data["Discnumber"]}
-        Track: {new_payload_data["Track"]}
-        Comment: {new_payload_data["Comment"]}
-        Special: {new_payload_data["Special"]}
+        Date: {new_payload_data["date"]}        
+        Title: {new_payload_data["title"]}
+        Artist: {new_payload_data["artist"]}
+        CoverArtist: {new_payload_data["cover_artist"]}
+        Version: {new_payload_data["version"]}
+        Discnumber: {new_payload_data["disc_number"]}
+        Track: {new_payload_data["track"]}
+        Comment: {new_payload_data["comment"]}
+        Special: {new_payload_data["special"]}
 """
 
         logger.debug(f"Payload Preview Loaded: {self.new_payload_label['text']}")
