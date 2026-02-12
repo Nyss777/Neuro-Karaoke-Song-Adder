@@ -1,11 +1,13 @@
 name: Build Program
 
 on:
-  # push:
-  #   paths:
-  #     - '**/*.py'
-    # branches: [main]
-  workflow_dispatch:
+  push:
+    # branches: [ main ]
+    tags:
+      - 'v*' 
+  pull_request:
+    # branches: [ main ]
+  # workflow_dispatch:
 
 jobs:
   build-program:
@@ -30,7 +32,7 @@ jobs:
         run: uv sync --all-extras --dev
 
       - name: build program
-        run: uv run --with pyinstaller pyinstaller --onedir --paths src --add-data "lib/metadata_utils;metadata_utils" --name "Neuro_K_Sync" src/local_sync/__main__.py       
+        run: uv run --with pyinstaller pyinstaller --onedir --paths src --add-data="lib/metadata_utils:metadata_utils" --name "Neuro_K_Sync" src/song_adder/__main__.py       
 
       # 4. Zip the output (PyInstaller --onedir creates a folder)
       - name: Archive Build
@@ -40,7 +42,7 @@ jobs:
       # 5. Create the Release and upload the zip
       - name: Create Release
         uses: softprops/action-gh-release@v2
-        # if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/')
         with:
           files: Neuro_K_Sync_*.zip
         env:
