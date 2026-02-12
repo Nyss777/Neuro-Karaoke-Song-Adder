@@ -1,11 +1,13 @@
 name: Build Program
 
 on:
-  # push:
-  #   paths:
-  #     - '**/*.py'
-    # branches: [main]
-  workflow_dispatch:
+  push:
+    # branches: [ main ]
+    tags:
+      - 'v*' 
+  pull_request:
+    # branches: [ main ]
+  # workflow_dispatch:
 
 jobs:
   build-program:
@@ -40,7 +42,7 @@ jobs:
       # 5. Create the Release and upload the zip
       - name: Create Release
         uses: softprops/action-gh-release@v2
-        # if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/')
         with:
           files: Neuro_K_Sync_*.zip
         env:
