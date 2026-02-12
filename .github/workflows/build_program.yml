@@ -1,9 +1,9 @@
 name: Build Program
 
 on:
-  push:
-    paths:
-      - '**/*.py'
+  # push:
+  #   paths:
+  #     - '**/*.py'
     # branches: [main]
   workflow_dispatch:
 
