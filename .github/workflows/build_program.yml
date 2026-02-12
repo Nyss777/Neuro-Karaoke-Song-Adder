@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   build-program:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest # make the executable for windows
     steps:
 
       - name: Checkout code
@@ -35,12 +35,13 @@ jobs:
         run: uv sync --all-extras --dev
 
       - name: build program
-        run: uv run --with pyinstaller pyinstaller --onedir --paths src --add-data="lib/metadata_utils:metadata_utils" --name "Neuro_K_Sync" src/song_adder/__main__.py       
+        run: uv run --with pyinstaller pyinstaller --onedir --paths src --add-data="lib/metadata_utils;metadata_utils" --name "Neuro_K_Sync" src/song_adder/__main__.py       
 
       # 4. Zip the output (PyInstaller --onedir creates a folder)
       - name: Archive Build
+        shell: pwsh
         run: |
-          zip -r Neuro_K_Sync_v${{ github.ref_name }}.zip dist/Neuro_K_Sync
+          Compress-Archive -Path dist/Neuro_K_Sync -DestinationPath Neuro_K_Sync_v${{ github.ref_name }}.zip
 
       # 5. Create the Release and upload the zip
       - name: Create Release
