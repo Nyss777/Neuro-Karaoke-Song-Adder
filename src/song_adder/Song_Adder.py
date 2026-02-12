@@ -4,7 +4,6 @@ import logging
 import os
 import sys
 import tkinter as tk
-from datetime import date
 from json import JSONDecodeError
 from logging import Logger, LogRecord
 from pathlib import Path
@@ -26,33 +25,16 @@ from PIL.ImageFile import ImageFile
 
 from .remuxer import remux_song
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
-if getattr(sys, 'frozen', False):
-    script_dir = Path(sys.executable).parent
-else:
-    script_dir = Path(__file__).parent.absolute()
-
-print(script_dir)
-
-log_path = script_dir / f'song_adder [{date.today()}].log'
-
-logger.setLevel(logging.DEBUG)
-logging.getLogger('PIL').setLevel(logging.INFO)
-
-formatter = logging.Formatter('%(levelname)s:%(name)s:%(message)s')
-
-file_handler = logging.FileHandler(log_path, encoding='utf-8')
-file_handler.setLevel(logging.DEBUG)
-file_handler.setFormatter(formatter)
-
-logger.addHandler(file_handler)
 
 class App():
-    def __init__(self):
+    def __init__(self, script_dir: Path):
+
         sys.stderr = StreamToLogger(logger, logging.CRITICAL)
+
         self.main_window = tk.Tk()
-        self.colors: dict[str, str] = self.load_colors()
+        self.colors: dict[str, str] = self.load_colors(script_dir)
         self.song_path: (str | None) = None
         self.song_data: (dict[str, str] | None) = None
         self.song_obj: (Song | None) = None
@@ -99,7 +81,7 @@ class App():
         self.preview_frame.grid(row=2, column=2, sticky='n')
         self.info_frame.grid(row=3, column=1, columnspan=2, sticky='nw')
 
-    def load_colors(self) -> dict[str, str]:
+    def load_colors(self, script_dir: Path) -> dict[str, str]:
 
         DEFAULT_COLORS = {
                     "primary" : "#1A1423",
@@ -108,7 +90,7 @@ class App():
                     "secondary text" : "#2C943A"
                     }
         
-        color_config = os.path.join(script_dir, "color_config.json")
+        color_config = script_dir / "color_config.json"
 
         if not os.path.exists(color_config):
             logger.debug("No color_config found, loading default colors")
@@ -682,6 +664,3 @@ class StreamToLogger:
     def flush(self):
         pass
 
-if __name__ == "__main__":
-    app = App()
-    app.main()
