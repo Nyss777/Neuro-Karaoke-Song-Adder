@@ -11,19 +11,20 @@ from pathlib import Path
 from tkinter import Tk, filedialog
 from typing import Any, Callable, cast
 
-from CF_Program import (
+from metadata_utils.CF_Program import (
     Song,
     get_song_data,
     process_new_tags,
     set_tags,
 )
-from data_verification import ValidationError, validate_payload
-from engraver import build_payload, engrave_payload
-from hash_mutagen import get_audio_hash
+from metadata_utils.data_verification import ValidationError, validate_payload
+from metadata_utils.engraver import build_payload, engrave_payload
+from metadata_utils.hash_mutagen import get_audio_hash
 from mutagen.id3 import APIC, ID3
 from PIL import Image, ImageTk, UnidentifiedImageError
 from PIL.ImageFile import ImageFile
-from remuxer import remux_song
+
+from .remuxer import remux_song
 
 logger = logging.getLogger()
 

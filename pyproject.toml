@@ -1,7 +1,23 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "song-adder"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "hjson>=3.1.0",
+    "mutagen>=1.47.0",
+    "pillow>=12.1.1",
+    "tinytag>=2.2.0",
+    "xxhash>=3.6.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/song_adder", "lib/metadata_utils"]
+
+[tool.hatch.build.targets.wheel.sources]
+"src" = ""
